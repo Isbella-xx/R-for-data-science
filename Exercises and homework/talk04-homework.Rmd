@@ -63,9 +63,18 @@ Sys.getenv("HOME")
 
 ```{r}
 ## 代码写这里，并运行；
-
+x<-111;
+y<-"abc";
+z<-"##$"
+a<-matrix(c(sample(1:100,20)),nrow=4)
+save.image(file="prj_r_for_bioinformatics");
+ls()
+rm(list=ls())
+load(file="prj_r_for_bioinformatics");
+ls()
+rm(a,x)
+ls()
 ```
-
 ## 练习与作业2：Factor基础
 
 ------------------------------------------------------------------------
@@ -82,11 +91,19 @@ Sys.getenv("HOME")
 
 `x[3] <- "widowed"`;
 
+不能成功。levels中没有"widowed"，所以不行。
+
 -   如果不，请提供解决方案；
 
 ```{r}
 ## 代码写这里，并运行；
-
+ x <- c("single", "married", "married", "single");
+ x<-as.factor(x);
+levels(x)<-c(levels(x),"single", "married");
+##解决方案
+levels(x)<-c(levels(x),"widowed");
+x[3] <- "widowed"
+x
 ```
 
 ### **factors 改变**
@@ -101,12 +118,16 @@ Sys.getenv("HOME")
 
 ```{r}
 ## 代码写这里，并运行；
-
+v = c("a", "b", "a", "c", "b")
+v<-as.factor(v);
+v
+levels(v)[1]<-"z"
+v
 ```
 
 -   比较改变前后的 `v` 的内容，改变levels 的操作使 `v` 发生了什么变化？
 
-答：
+答：v中所有第一个levels的值都被替换了。
 
 ### **factors合并**
 
@@ -116,7 +137,12 @@ Sys.getenv("HOME")
 
 ```{r}
 ## 代码写这里，并运行；
-
+a<-factor(c(sample(LETTERS,5)));
+b<-factor(c(sample(LETTERS,7)));
+a
+b
+x<-c(a,b)
+x
 ```
 
 ------------------------------------------------------------------------
@@ -129,7 +155,13 @@ Sys.getenv("HOME")
 
 ```{r}
 ## 代码写这里，并运行；
-
+mon <- c("Mar","Nov","Mar","Aug","Sep","Jun","Nov","Nov","Oct","Jun","May","Sep","Dec","Jul","Nov");
+month_levels<-c(
+"Jan","Feb","Mar","Apr","May","Jun",
+"Jul","Aug","Sep","Oct","Nov","Dec"
+)
+mon1<-factor(mon,levels=month_levels)
+sort(mon1)
 ```
 
 ------------------------------------------------------------------------
@@ -138,11 +170,22 @@ Sys.getenv("HOME")
 
 `forcats`包中的 fct_inorder, fct_infreq和 fct_inseq 函数的作用是什么？
 
+fct_inorder：levels按照第一次出现的顺序排序
+fct_infreq：levels按照出现的次数从大到小排序, 相同的再按照大小从小到大排序
+ fct_inseq：levels按照数字大小从小到大排序
+ 
 请使用`forcats`包中的`gss_cat`数据举例说明
 
 ```{r}
 ## 代码写这里，并运行；
-
+library(forcats)
+a<-head(gss_cat,n=10)
+f1=a$age
+f1<-as.factor(f1)
+f1
+fct_inorder(f1)
+fct_infreq(f1)
+fct_inseq(f1)
 ```
 
 ## 练习与作业3：用 mouse genes 数据做图
@@ -164,5 +207,37 @@ Sys.getenv("HOME")
 
 ```{r}
 ## 代码写这里，并运行；
-
+library(ggforce) 
+library(forcats)
+library(dplyr)
+mouse.genes<- 
+    read.delim(file="../data/talk04/mouse_genes_biomart_sep2018.txt", 
+               sep="\t",header=T,stringsAsFactors=T); 
+mouse.chr_genes<-
+    subset(mouse.genes,Chromosome.scaffold.name%in% 
+               c("1","2","3","4","5","6", 
+                 "7","8","9","10","11","12" ,
+                 "13","14","15","16","17","18","19","X","Y")); mouse.chr_genes$Chromosome.scaffold.name= 
+    droplevels (mouse.chr_genes$Chromosome.scaffold.name) 
+mouse.chr_genes$Chromosome.scaffold.name<- 
+    fct_inseq(mouse.chr_genes$Chromosome.scaffold.name) 
+levels (mouse.chr_genes$Chromosome.scaffold.name) 
+boxplot(Transcript.length..including.UTRs.and.CDS.~Chromosome.scaffold.name, 
+        data=mouse.chr_genes,las =2) 
+library(readr)
+mouse.tibble<- 
+  read.delim(file="../data/talk04/mouse_genes_biomart_sep2018.txt",
+             quote="")
+mouse.tibble.chr10_12<-
+mouse.tibble %>% filter(`Chromosome.scaffold.name` %in% c("1","2","3","4","5","6", 
+                 "7","8","9","10","11","12" ,
+                 "13","14","15","16","17","18","19","X","Y"));
+plot4<-
+ggplot(data=mouse.tibble.chr10_12,
+aes(x=reorder(`Chromosome.scaffold.name`,
+`Transcript.length..including.UTRs.and.CDS.`,median),y=`Transcript.length..including.UTRs.and.CDS.`))+
+geom_boxplot()+
+coord_flip()+
+ylim(0,2000)
+plot4
 ```

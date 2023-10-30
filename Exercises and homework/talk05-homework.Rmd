@@ -63,6 +63,20 @@ getwd(); ## 显示当前工作目录
 
 ```{r}
 ## 代码写这里，并运行；
+## 代码写这里，并运行；
+library(tidyverse)
+library(dplyr)
+head(mouse.tibble)
+mou<-mouse.tibble%>%
+arrange(Chromosome.scaffold.name,-Transcript.length..including.UTRs.and.CDS.)
+mou%>%group_by( Chromosome.scaffold.name,Transcript.type)%>%
+summarise(avg_length=mean(Transcript.length..including.UTRs.and.CDS.),Transcript_count=n(),longest=first(Transcript.length..including.UTRs.and.CDS.),shortest=last(Transcript.length..including.UTRs.and.CDS.))%>%
+arrange(-avg_length);
+mou1<-mouse.tibble%>%
+arrange(Chromosome.scaffold.name,-Transcript.length..including.UTRs.and.CDS.)
+first(mou1)
+last(mou1)
+
 
 ```
 
@@ -88,7 +102,42 @@ grades2 <- tibble( "Name" = c("Weihua Chen", "Mm Hu", "John Doe", "Jane Doe",
 
 ```{r}
 ## 代码写这里，并运行；
+library(tidyverse)
+library(dplyr)
+grades2 <- tibble( "Name" = c("Weihua Chen", "Mm Hu", "John Doe", "Jane Doe",
+                             "Warren Buffet", "Elon Musk", "Jack Ma"),
+                  "Occupation" = c("Teacher", "Student", "Teacher", "Student", 
+                                   rep( "Entrepreneur", 3 ) ),
+                  "English" = sample( 60:100, 7 ),
+                  "ComputerScience" = sample(80:90, 7),
+                  "Biology" = sample( 50:100, 7),
+                  "Bioinformatics" = sample( 40:90, 7)
+                  );
+grades2
+grades.melted<-grades2 %>%
+gather(course,grade,-Name,-Occupation,na.rm=T);
 
+grades.melted2<-
+  grades.melted %>%
+arrange(Name,-grade);
+
+grades.melted2 %>%
+group_by(Name) %>%
+summarise(worst_course=last(course),
+worst_grade=last(grade)) %>%
+  arrange(-worst_grade);
+grades.melted3<-grades2 %>%
+gather(course,grade,-Name,-Occupation,na.rm=T);
+grades.melted3%>%
+group_by(Name,Occupation)%>%
+summarise(avg_grades=mean(grade),courses_count=n())%>%
+arrange(-avg_grades);
+  grades.melted4<-grades.melted3 %>%
+gather(courses_count,avg_grades,-Name,-Occupation,na.rm=T);
+grades.melted4%>%
+group_by(Occupation)%>%
+summarise(avg=mean(avg_grades))%>%
+arrange(-avg);
 ```
 
 ------------------------------------------------------------------------
@@ -100,7 +149,15 @@ grades2 <- tibble( "Name" = c("Weihua Chen", "Mm Hu", "John Doe", "Jane Doe",
 
 ```{r}
 ## 代码写这里，并运行；
-
+head(starwars);
+stats<-
+starwars%>%
+select(name,height,mass,gender,homeworld,species)%>%
+mutate(bmi=mass/((height/100)*(height/100)));
+head(stats);
+stats2<-stats%>%select(name,gender,homeworld,bmi,species)%>%
+filter(bmi>=30&species=="Human");
+head(stats2%>%select(-bmi,-species));
 ```
 
 3.  挑选出所有人类；
@@ -109,17 +166,26 @@ grades2 <- tibble( "Name" = c("Weihua Chen", "Mm Hu", "John Doe", "Jane Doe",
 
 ```{r}
 ## 代码写这里，并运行；
-
+head(starwars);
+stats0<-
+starwars%>%
+select(name,height,mass,gender,homeworld,species)%>%
+mutate(bmi=mass/((height/100)*(height/100)));
+stats3<-stats0%>%select(name,gender,homeworld,bmi,species)%>%
+filter(species=="Human");
+head(stats3);
 ```
 
 6.  查看 `starwars` 的 `films` 列，它有什么特点？`data.frame`可以实现类似的功能吗？
 
-答：
+答：适合屏幕且显示列的类型。不可以。
 
 7.  为`starwars`增加一列，用于统计每个角色在多少部电影中出现。
 
 ```{r}
 ## 代码写这里，并运行；
+starwars%>%
+mutate(count=lengths(films));
 
 ```
 
@@ -133,21 +199,32 @@ grades2 <- tibble( "Name" = c("Weihua Chen", "Mm Hu", "John Doe", "Jane Doe",
 
 ```{r}
 ## 代码写这里，并运行；
-
+head(Theoph);
+the<-
+Theoph%>%
+select(Subject:Dose)
+head(the);
+ncol(the)
 ```
 
 2.  用`filter` 选取 `Dose` 大于5，且 `Time` 高于 `Time` 列平均值的行；
 
 ```{r}
 ## 代码写这里，并运行；
-
+ average <- mean(Theoph$Time)
+the1<-Theoph%>%filter(Dose>5&Time>average);
+head(the1);
 ```
 
 3.  用 `mutate` 函数产生新列 `trend`，其值为 `Time` 与 `Time`列平均值的差；注意：请去除可能产生的 `na` 值；
 
 ```{r}
 ## 代码写这里，并运行；
-
+average1 <- mean(Theoph$Time)
+the2<-
+Theoph%>%
+mutate(trend=Time-average1);
+head(the2,);
 ```
 
 4.  用 `mutate` 函数产生新列 `weight_cat` ，其值根据 `Wt`的取值范围而不同：
@@ -156,3 +233,10 @@ grades2 <- tibble( "Name" = c("Weihua Chen", "Mm Hu", "John Doe", "Jane Doe",
 -   如果 `Wt` \> 72.57，为 'Middleweight'，否则
 -   如果 `Wt` \> 66.68，为 'Light-middleweight'
 -   其它值，为 'Welterweight'
+```{r}
+## 代码写这里，并运行；
+the3<-
+Theoph%>%
+mutate(weight_cat =ifelse (Wt> 76.2,"Super-middleweight",ifelse(Wt> 72.57,"Middleweight",ifelse(Wt> 66.68,"Light-middleweight","Welterweight"))))
+head(the3);
+```

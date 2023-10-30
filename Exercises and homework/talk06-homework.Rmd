@@ -63,21 +63,32 @@ Sys.getenv("HOME")
 
 ```{r}
 ## 代码写这里，并运行；
-
+library(tidyverse)
+library(tidyr)
+library(dplyr);
+grades <- read_tsv( file = "../data/talk05/grades.txt" );
+grades
+grades_wide<-grades%>%
+pivot_wider(names_from="course",values_from="grade");
+grades_wide;
+grades_long<-grades_wide%>%
+  pivot_longer(-name,names_to="course",values_to="grade");
+grades_long
 ```
 
 3.  使用 `pivot_longer` 时，有时会产生 `na` 值，如何使用此函数的参数去除带 `na` 的行？
 
 ```{r}
 ## 代码写这里，并运行；
-
+grades_long1<-grades_long[!is.na(grades_long$grade),];
+grades_long1
 ```
 
 4.  以下代码有什么作用？
 
 `grades %>% complete( name, course )`
 
-答：
+答：直接输出grades会去掉NA的行，这个代码可以显示完整版的grades,含有带NA的行。
 
 
 ## 练习与作业2：作图
@@ -103,6 +114,24 @@ Sys.getenv("HOME")
 
 ```{r}
 ## 代码写这里，并运行；
+abu <- 
+      read_delim(
+        file = "../data/talk06/relative_abundance_for_RUN_ERR1072629_taxonlevel_species.txt",
+        delim = "\t", quote = "", comment = "#");
+library(tidytidbits);
+abu.dat<-
+abu%>%arrange(desc(relative_abundance))%>%
+lump_rows(scientific_name,relative_abundance,n=5,other_level="Qita");
+head(abu.dat,n=6);
+library(ggforce)
+library(ggplot2)
+ggplot()+
+
+geom_arc_bar(data=abu.dat,
+stat = "pie",
+aes(x0=0,y0=0,r0=1,r=2,
+
+amount=relative_abundance,fill=scientific_name))
 
 ```
 
@@ -125,14 +154,28 @@ ggplot(starwars, aes(x = hair_color)) +
 
 ```{r}
 ## 代码写这里，并运行；
-
+starwars_part <- starwars %>% count(hair_color) %>% arrange(n)
+starwars_part<- mutate_all(starwars_part, ~replace(., is.na(.), 0))
+ ggplot(starwars_part, aes(x = fct_reorder(hair_color,-n), y = n)) + 
+   geom_bar( stat =  "identity") +
+  coord_flip()
 ```
 
 2.  统计 `skin_color` 时，将出现频率小于0.05（即5%）的颜色归为一类`Others`，按出现次数排序后，做与上面类似的 barplot；
 
 ```{r}
 ## 代码写这里，并运行；
-
+starwars_part1<-
+starwars%>%count(skin_color) %>% arrange(n)%>%
+lump_rows(skin_color,n);
+a<-sum(starwars_part1$n)
+starwars_part2<-starwars_part1%>%filter(n/a<=0.05);
+starwars_part3<-starwars_part1%>%filter( n >= a*0.05)
+starwars_part4<-starwars_part3%>%add_row(skin_color = "Others", n = sum(starwars_part2$n))%>%arrange(n);
+starwars_part4
+ggplot(starwars_part4, aes(x = fct_reorder(skin_color,-n), y = n)) + 
+   geom_bar( stat =  "identity") +
+  coord_flip()
 ```
 
 3.  使用 `2` 的统计结果，但画图时，调整 bar 的顺序，使得 `Others` 处于第4的位置上。提示，可使用 `fct_relevel` 函数；
@@ -140,6 +183,9 @@ ggplot(starwars, aes(x = hair_color)) +
 ```{r}
 ## 代码写这里，并运行；
 
+ggplot(starwars_part4,aes(x = fct_relevel(fct_reorder(skin_color,-n),"Others", after = 3), y = n)) + 
+   geom_bar( stat =  "identity" ) +
+  coord_flip()
 ```
 
 ## 练习与作业3：数据分析
@@ -159,7 +205,7 @@ ggplot(starwars, aes(x = hair_color)) +
 
 ```{r}
 ## 代码写这里，并运行；
-
+ 
 ```
 
 ### **对宏基因组 相对丰度数据 进行分析**
